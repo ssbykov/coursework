@@ -1,3 +1,4 @@
+import logging
 import hashlib
 import requests
 from datetime import datetime as dt
