@@ -88,7 +88,7 @@ def upload_to_cloud_disk(disk_id):
             sys.exit()
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='coursework.log', level=logging.INFO, filemode='w',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(filename='coursework.log', level=logging.INFO, encoding = 'UTF-8', filemode='w',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger('main')
     logger.info("Программа запущена.")    
     sl_client, network_name = select_social_net()
