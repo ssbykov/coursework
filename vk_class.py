@@ -65,13 +65,13 @@ class VKnet:
             else:
                 dict_res[file_name] = [file_url['url'], file_url['type']]
         return dict_res
-#метод для вывода сообщений об ошибке
+#метод обработки запроса и проверки на ошибки
     def _response(self, method_name, response_method_name, response_params):
         try:
             response = requests.get(self.URL + response_method_name, response_params)
         except Exception as exc:
             self.logger.error(exc)
-            return {'response':''}
+            sys.exit()
         self.logger.info(response)
         if str(response) != '<Response [200]>':
             print(f'Запрос не прошел. Ответ сервера {response}.')
