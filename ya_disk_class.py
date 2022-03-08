@@ -1,3 +1,4 @@
+import sys
 import logging
 import requests
 import json
@@ -15,8 +16,17 @@ class YaDisk:
 # метод для создания папки на яндекс диске
     def _create_folder(self, folder_path):
         folder_url = 'https://cloud-api.yandex.net/v1/disk/resources'
-        requests.put(folder_url, headers=self.headers, params={'path': folder_path})
-        self.logger.info(f'Создана папака для сохранения альбома "{folder_path}".')
+        try:
+            response = requests.put(folder_url, headers=self.headers, params={'path': folder_path})
+        except Exception as exc:
+            self.logger.error(exc)
+            sys.exit()
+        if response.status_code == 201:
+            self.logger.info(f'Создана папака для сохранения альбома "{folder_path}".')
+        else:
+            print(f'Код ошибки:{response.status_code} - {response.text}.')
+            self.logger.error(f'При создании папки "{folder_path}" возникла ошибка {response.status_code} - {response.text}.')
+            sys.exit()
 # метод для выгрузки фотографий на диск
     def copy_photos_to_disk(self, file_urls_dict, album_name):
         self._create_folder(album_name)
@@ -28,7 +38,11 @@ class YaDisk:
         load_files = []
         for key, value in file_urls_dict.items():
             params = {'path': f'{album_name}/{key}.jpg', 'url': value[0]}
-            response = requests.post(upload_url, headers=self.headers, params=params)
+            try:
+                response = requests.post(upload_url, headers=self.headers, params=params)
+            except Exception as exc:
+                self.logger.error(exc)
+                sys.exit()
             if response.status_code == 202:
                 bar.next()
                 load_files.append({'file_name': key + '.jpg', 'size': value[1]})

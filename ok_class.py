@@ -13,15 +13,15 @@ class OKnet:
         }
         self.token = token
         self.session_secret_key = session_secret_key
+        self.logger = logging.getLogger('main.OKnet')
 # метод для получения данных пользователя по ID
     def _get_profile(self, owner_id):
+        self.logger.info('Выполнен вызов метода _get_profile()')
         if owner_id == '0':
             _get_profile_params = {'fields': 'NAME','method': 'users.getCurrentUser'}
         else:
             _get_profile_params = {'uids': owner_id,'fields': 'NAME','method': 'users.getInfo'}
-        hash_params = {**self.params, **_get_profile_params}
-        response = self._hash_and_request(hash_params)
-        self._error_ok(response, self._get_profile.__name__)
+        response = self._response(self._get_profile.__name__, {**self.params, **_get_profile_params})
         if len(response) == 1:
                 return [response[0]['name'],response[0]['uid']]
         elif response:
@@ -30,18 +30,18 @@ class OKnet:
             return ['','']
 # метод для получения данных по личному альбому "личные фотографии" по ID пользователя и вывод на консоль
     def _get_own_albums(self, owner_id):
+        self.logger.info('Выполнен вызов метода _get_own_albums()')
         get_albums_params = {
             'fid': owner_id,
             'detectTotalCount': True,
             'fields': 'ALBUM.AID',
             'method': 'photos.getPhotos',
         }
-        hash_params = {**self.params, **get_albums_params}
-        response = self._hash_and_request(hash_params)
-        self._error_ok(response, self._get_profile.__name__)
+        response = self._response(self._get_profile.__name__, {**self.params, **get_albums_params})
         return response["totalCount"]
 # метод для получения данных по альбомам пользователя по ID пользователя и вывод на консоль
     def get_albums(self, owner_id, user_name):
+        self.logger.info('Выполнен вызов метода get_albums()')
         list_albims = []
         list_albims += [{'aid': '0','photos_count': self._get_own_albums(owner_id), 'title': 'Личные фотографии'}]
         hasMore = True
@@ -54,9 +54,7 @@ class OKnet:
                 'method': 'photos.getAlbums',
                 'pagingAnchor': pagingAnchor
             }
-            hash_params = {**self.params, **get_albums_params}
-            response = self._hash_and_request(hash_params)
-            self._error_ok(response, self._get_profile.__name__)
+            response = self._response(self._get_profile.__name__, {**self.params, **get_albums_params})
             hasMore = response['hasMore']
             pagingAnchor = response['pagingAnchor']
             list_albims += (x for x in response['albums'] if x['photos_count'] > 0)
@@ -66,6 +64,7 @@ class OKnet:
         return {x['aid']:x['title'] for x in list_albims}
 # метод для получения данных по фотографиям в альбоме
     def get_album_photo(self, owner_id, album_id, number_photo):
+        self.logger.info('Выполнен вызов метода get_album_photo()')
         dict_res = {}
         hasMore = True
         pagingAnchor = ''
@@ -85,9 +84,7 @@ class OKnet:
                 'method': 'photos.getPhotos',
                 'anchor': pagingAnchor
             }
-            hash_params = {**self.params, **get_album_photo_params}
-            response = self._hash_and_request(hash_params)
-            self._error_ok(response, self._get_profile.__name__)
+            response = self._response(self._get_profile.__name__, {**self.params, **get_album_photo_params})
             hasMore = response['hasMore']
             pagingAnchor = response['anchor']
             number_photo -= 100
@@ -103,15 +100,22 @@ class OKnet:
                     dict_res[file_name] = [file_url, 'pic_max']
         return dict_res
 #метод хеширования и отправки запросов за сервер
-    def _hash_and_request(self, hash_params):
+    def _response(self, method_name, hash_params):
+        method_name_dict = {'_get_profile': 'по пользователю', 'get_albums': 'по альбомам', 'get_album_photo': 'по фотографиям'}
         hash_str = ''.join([f'{k}={v}' for k, v in sorted(hash_params.items(),\
             key=lambda hash_params: hash_params[0])]) + self.session_secret_key
         sig = hashlib.md5(bytes(hash_str, encoding='utf-8')).hexdigest()
-        return requests.get('https://api.ok.ru/fb.do', params={**hash_params, **{'access_token': self.token}, **{'sig': sig}}).json()
-#метод для вывода сообщений об ошибке
-    def _error_ok(self, response, method_name):
-        method_name_dict = {'_get_profile': 'по пользователю', 'get_albums': 'по альбомам', 'get_album_photo': 'по фотографиям'}
-        if 'error_code' in response:
-            print(f"При запросе данных {method_name_dict[method_name]} возникла ошибка: {response['error_code']}"
-            f" - {response['error_msg']}.")
+        try:
+            response = requests.get('https://api.ok.ru/fb.do', params={**hash_params, **{'access_token': self.token}, **{'sig': sig}})
+        except Exception as exc:
+            self.logger.error(exc)
             sys.exit()
+        self.logger.info(response)
+        response = response.json()
+        if 'error_code' in response:
+            str_error = f"При запросе данных {method_name_dict[method_name]} возникла ошибка: {response['error_code']}" \
+                f" - {response['error_msg']}."
+            self.logger.error(str_error)
+            print(str_error)
+            sys.exit()
+        return response

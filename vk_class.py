@@ -6,16 +6,12 @@ import sys
 class VKnet:
     URL = 'https://api.vk.com/method/'
     def __init__(self, token: str, version: str):
-        self.params = {
-            'access_token': token,
-            'v': version    
-        }
+        self.params = {'access_token': token, 'v': version}
         self.logger = logging.getLogger('main.VKnet')
 # метод для получения данных пользователя по ID
     def _get_profile(self, id_user):
         self.logger.info('Выполнен вызов метода _get_profile()')
         _get_profile_params ={}
-        # response = ''
         if id_user != '0':
             _get_profile_params = {'user_ids': id_user}
         response = self._response(self._get_profile.__name__, 'users.get', {**self.params, **_get_profile_params})
@@ -26,7 +22,6 @@ class VKnet:
 # метод для получения данных по альбомам пользователя по ID пользователя и вывод на консоль
     def get_albums(self, owner_id, user_name):
         self.logger.info('Выполнен вызов метода get_albums()')
-        # response = ''
         dict_albims = {}
         get_albums_params = {
             'owner_id': owner_id,
@@ -43,7 +38,6 @@ class VKnet:
     def get_album_photo(self, owner_id, album_id, number_photo):
         self.logger.info('Выполнен вызов метода get_album_photo()')
         size_dict = {'s': 1, 'm': 2, 'o': 3, 'p': 4, 'q': 5, 'r': 6, 'x': 7, 'y': 8, 'z': 9, 'w': 10}
-        # response = ''
         dict_res = {}
         get_album_photo_params = {
             'owner_id': owner_id,
