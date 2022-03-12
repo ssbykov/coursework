@@ -11,6 +11,8 @@ def select_social_net():
     while network_id not in ('q', '1', '2', '3'):
         network_id =input('Введите номер социальной сети (1-ВКонтате, 2 - ОК, 3 - Инстаграм, q-выход): ')
         if network_id == 'q':
+            sys.exit()
+        elif network_id == '1':
             sn_client = VKnet('токен ВКонтакте', '5.131')
             network_name = 'VK'
         elif network_id == '2':
@@ -77,7 +79,7 @@ def upload_to_cloud_disk(disk_id):
                 dict_input['number_photo']), dict_input['album_name'])
         elif disk_id == '1':
             logger.info('Выбран YaDisk.')    
-            ya_disk = YaDisk('Введите токен')
+            ya_disk = YaDisk('Введите токен к яндекс диску')
             ya_disk.copy_photos_to_disk(dict_input['sn'].get_album_photo(dict_input['id_user'], dict_input['album_id'], \
                 dict_input['number_photo']), dict_input['album_name'])
         if disk_id == 'q':
